@@ -3,9 +3,18 @@ from virustotal_api import api
 
 def Urlscan1(message):
 	if api == "XXX":
-		print("\033[93m {}\033[00m" .format("*****************************************************"))
-		print("\033[93m {}\033[00m" .format("Please fill in the virustotal_api.py for access virustotal api"))
-		print("\033[93m {}\033[00m" .format("*****************************************************"))
+		print(
+			f"\033[93m *****************************************************\033[00m"
+		)
+
+		print(
+			f"\033[93m Please fill in the virustotal_api.py for access virustotal api\033[00m"
+		)
+
+		print(
+			f"\033[93m *****************************************************\033[00m"
+		)
+
 
 	else:
 		try:
@@ -24,19 +33,25 @@ def Urlscan1(message):
 			scan = json_response.get("scans") # scan data
 
 
-			print("\033[93m {}\033[00m" .format("*****************************************************"))
+			print(
+				f"\033[93m *****************************************************\033[00m"
+			)
+
 
 			for firms in scan: #List what they detected
 				a = scan.get(firms)
 				detected = str(a.get("detected"))
 				if detected == "True":
-					print("\033[92m {}\033[00m" .format(str(firms)) + " : " + str(a.get("result")) )
+					print(f"\033[92m {str(firms)}\033[00m : " + str(a.get("result")))
 
 
 
-			print("\033[91m {}\033[00m" .format("Detection ratio: " + str(positives) + "/" + str(total))) # detection ratio
+			print(f"\033[91m Detection ratio: {str(positives)}/{str(total)}\033[00m")
 
-			print("\033[93m {}\033[00m" .format("*****************************************************"))
+			print(
+				f"\033[93m *****************************************************\033[00m"
+			)
+
 
 		except:
 			print("Somethings wrong...")

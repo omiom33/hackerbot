@@ -43,9 +43,11 @@ if consumer_key == "XXX" or consumer_secret == "XXX" or access_token == "XXX" or
     print("Please fill in the modules/twittersecrets.py for access twitter api")
     print("*****************************************************")
 
-parser = argparse.ArgumentParser(description=
-    "Simple Twitter Profile Analyzer (https://github.com/x0rz/tweets_analyzer) version %s" % __version__,
-                                 usage='%(prog)s -n <screen_name> [options]')
+parser = argparse.ArgumentParser(
+    description=f"Simple Twitter Profile Analyzer (https://github.com/x0rz/tweets_analyzer) version {__version__}",
+    usage='%(prog)s -n <screen_name> [options]',
+)
+
 parser.add_argument('-l', '--limit', metavar='N', type=int, default=1000,
                     help='limit the number of tweets to retreive (default=1000)')
 parser.add_argument('-n', '--name', required=True, metavar="screen_name",
@@ -99,9 +101,12 @@ def process_tweet(tweet):
     global retweets
 
     # Check for filters before processing any further
-    if args.filter and tweet.source:
-        if not args.filter.lower() in tweet.source.lower():
-            return
+    if (
+        args.filter
+        and tweet.source
+        and args.filter.lower() not in tweet.source.lower()
+    ):
+        return
 
     tw_date = tweet.created_at
 
@@ -116,7 +121,7 @@ def process_tweet(tweet):
         retweeted_users[rt_id_user] += 1
 
         if tweet.retweeted_status.user.screen_name not in id_screen_names:
-            id_screen_names[rt_id_user] = "@%s" % tweet.retweeted_status.user.screen_name
+            id_screen_names[rt_id_user] = f"@{tweet.retweeted_status.user.screen_name}"
 
         retweets += 1
     except:
@@ -130,7 +135,7 @@ def process_tweet(tweet):
         tw_date = (tweet.created_at + datetime.timedelta(seconds=args.utc_offset))
 
     # Updating our activity datasets (distribution maps)
-    activity_hourly["%s:00" % str(tw_date.hour).zfill(2)] += 1
+    activity_hourly[f"{str(tw_date.hour).zfill(2)}:00"] += 1
     activity_weekly[str(tw_date.weekday())] += 1
 
     # Updating langs
@@ -148,7 +153,7 @@ def process_tweet(tweet):
     # Updating hashtags list
     if tweet.entities['hashtags']:
         for ht in tweet.entities['hashtags']:
-            ht['text'] = "#%s" % ht['text']
+            ht['text'] = f"#{ht['text']}"
             detected_hashtags[ht['text']] += 1
 
     # Updating domains list
@@ -162,8 +167,8 @@ def process_tweet(tweet):
     if tweet.entities['user_mentions']:
         for ht in tweet.entities['user_mentions']:
             mentioned_users[ht['id_str']] += 1
-            if not ht['screen_name'] in id_screen_names:
-                id_screen_names[ht['id_str']] = "@%s" % ht['screen_name']
+            if ht['screen_name'] not in id_screen_names:
+                id_screen_names[ht['id_str']] = f"@{ht['screen_name']}"
 
 
 def process_friend(friend):
@@ -193,11 +198,10 @@ def int_to_weekday(day):
 
 def print_stats(dataset, top=5):
     """ Displays top values by order """
-    sum = numpy.sum(list(dataset.values()))
-    i = 0
-    if sum:
+    if sum := numpy.sum(list(dataset.values())):
         sorted_keys = sorted(dataset, key=dataset.get, reverse=True)
         max_len_key = max([len(x) for x in sorted_keys][:top])  # use to adjust column width
+        i = 0
         for k in sorted_keys:
             try:
                 print(("- \033[1m{:<%d}\033[0m {:>6} {:<4}" % max_len_key)
@@ -252,7 +256,7 @@ def main():
     twitter_api = tweepy.API(auth)
 
     # Getting general account's metadata
-    print("[+] Getting @%s account data..." % args.name)
+    print(f"[+] Getting @{args.name} account data...")
     user_info = twitter_api.get_user(screen_name=args.name)
 
     print("[+] lang           : \033[1m%s\033[0m" % user_info.lang)
@@ -304,16 +308,17 @@ def main():
     print("[+] @%s did \033[1m%d\033[0m RTs out of %d tweets (%.1f%%)" % (args.name, retweets, num_tweets, (float(retweets) * 100 / num_tweets)))
 
     # Converting users id to screen_names
-    retweeted_users_names = {}
-    for k in retweeted_users.keys():
-        retweeted_users_names[id_screen_names[k]] = retweeted_users[k]
+    retweeted_users_names = {
+        id_screen_names[k]: retweeted_users[k] for k in retweeted_users.keys()
+    }
 
     print("[+] Top 5 most retweeted users")
     print_stats(retweeted_users_names, top=5)
 
-    mentioned_users_names = {}
-    for k in mentioned_users.keys():
-        mentioned_users_names[id_screen_names[k]] = mentioned_users[k]
+    mentioned_users_names = {
+        id_screen_names[k]: mentioned_users[k] for k in mentioned_users.keys()
+    }
+
     print("[+] Top 5 most mentioned users")
     print_stats(mentioned_users_names, top=5)
 

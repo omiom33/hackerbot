@@ -9,5 +9,5 @@ def Features(start="\033[1m", mid="\033[93m", end="\033[0;0m", arrow=" --> "):
         "Mimipenguin (Tool to dump login credentials)": "!mimipenguin"
     }
 
-    for item in func_dict.keys():
-        print("{}{}{}{}{}{}".format(start, mid, item, arrow, end, func_dict[item]))
+    for item in func_dict:
+        print(f"{start}{mid}{item}{arrow}{end}{func_dict[item]}")
