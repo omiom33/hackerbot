@@ -14,11 +14,11 @@ def Commands(message):
 		elif message[0] == "!twitter":
 			if message[1][:1] == "@":
 				try:
-					os.system("python3 modules/tweets_analyzer.py -n " + message[1][1:]) # run tweets analyzer
+					os.system(f"python3 modules/tweets_analyzer.py -n {message[1][1:]}")
 				except:
 					print("There is a problem.Did you write username? Please try again. !twitter @username")
 			else:
-				print("Bad syntax,dont forget use '@' .Try again, !twitter @username")	
+				print("Bad syntax,dont forget use '@' .Try again, !twitter @username")
 		elif message[0] == "!filescan":
 			if message[1]:
 				try:	
